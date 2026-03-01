@@ -1,0 +1,96 @@
+-- ========================
+-- 基础设置
+-- ========================
+vim.g.mapleader = " "
+vim.o.number = true
+vim.o.relativenumber = true
+vim.o.tabstop = 4
+vim.o.shiftwidth = 4
+vim.o.expandtab = true
+vim.o.smartindent = true
+vim.o.termguicolors = true
+
+-- ========================
+-- lazy.nvim 安装
+-- ========================
+local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+
+if not vim.loop.fs_stat(lazypath) then
+  vim.fn.system({
+    "git",
+    "clone",
+    "--filter=blob:none",
+    "https://github.com/folke/lazy.nvim.git",
+    lazypath,
+  })
+end
+
+vim.opt.rtp:prepend(lazypath)
+
+-- ========================
+-- 插件加载
+-- ========================
+require("lazy").setup({
+
+  -- 先加载 Treesitter（但不在这里配置）
+  "nvim-treesitter/nvim-treesitter",
+
+  {
+    "nvim-telescope/telescope.nvim",
+    dependencies = { "nvim-lua/plenary.nvim" },
+    cmd = "Telescope",  -- 延迟加载，按需启动
+    keys = {
+      { "<leader>ff", "<cmd>Telescope find_files<cr>", desc = "Find files" },
+      { "<leader>fg", "<cmd>Telescope live_grep<cr>", desc = "Live grep" },
+    },
+    config = function()
+      require("telescope").setup({})
+    end,
+  },
+
+})
+
+-- ========================
+-- Treesitter 配置（放在 lazy.setup 之后）
+-- ========================
+-- 确保 Treesitter 已加载
+local ok, treesitter = pcall(require, "nvim-treesitter.configs")
+if ok then
+  treesitter.setup({
+    ensure_installed = { "c", "lua", "vim" },
+    highlight = { enable = true },
+    indent = { enable = true },
+  })
+else
+  -- 如果还没加载，稍后重试
+  vim.defer_fn(function()
+    local ok2, treesitter2 = pcall(require, "nvim-treesitter.configs")
+    if ok2 then
+      treesitter2.setup({
+        ensure_installed = { "c", "lua", "vim" },
+        highlight = { enable = true },
+        indent = { enable = true },
+      })
+    end
+  end, 500)  -- 延迟 500ms 后重试
+end
+
+-- ========================
+-- 原生 LSP (0.11+)
+-- ========================
+vim.lsp.config("clangd", {
+  cmd = { "clangd", "--background-index" },
+  filetypes = {"c", "cpp"}, -- 限制文件类型
+})
+
+vim.lsp.config("gopls", {
+    cmd = {"gopls"},
+    filetypes = {"go", "gomod", "gowork", "gotmpl"},
+})
+
+vim.lsp.enable("clangd")
+vim.lsp.enable("gopls")
+vim.keymap.set("n", "gd", vim.lsp.buf.definition)
+vim.keymap.set("n", "gr", vim.lsp.buf.references)
+vim.keymap.set("n", "K", vim.lsp.buf.hover)
+vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename)

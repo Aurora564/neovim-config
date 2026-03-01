@@ -1,25 +1,4 @@
--- 基础
-vim.g.mapleader = " "
-vim.o.number = true
+require("core.options") 
+require("core.keymaps")
+require("plugins")
 
--- lazy.nvim 安装
-local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-
-if not vim.loop.fs_stat(lazypath) then
-  vim.fn.system({
-    "git",
-    "clone",
-    "--filter=blob:none",
-    "https://github.com/folke/lazy.nvim.git",
-    lazypath,
-  })
-end
-
-vim.opt.rtp:prepend(lazypath)
-
-require("lazy").setup({
-  {
-    "nvim-treesitter/nvim-treesitter",
-    build = ":TSUpdate",
-  }
-})
